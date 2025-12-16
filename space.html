@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Space theme</title>
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: black;
+        cursor: none;
+    }
+
+    canvas {
+        display: block;
+    }
+</style>
+</head>
+<body>
+<audio id="bg-music" loop autoplay>
+  <source src="music/celestial-drift-2.mp3" type="audio/mpeg">
+  Your browser does not support HTML5.
+</audio>
+<canvas id="stars"></canvas>
+
+<script>
+/* =========================================================
+   GENERAL CONFIGURATION
+   ========================================================= */
+const STAR_COUNT = 800;     // Quantity
+const SPEED = 0.3;          // Speed
+const PARALLAX_STRENGTH = 20; // Camera movement force 
+
+/* =========================================================
+   CANVAS SETUP
+   ========================================================= */
+const canvas = document.getElementById("stars");
+const ctx = canvas.getContext("2d");
+
+let width, height, centerX, centerY;
+
+function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    centerX = width / 2;
+    centerY = height / 2;
+}
+
+window.addEventListener("resize", resize);
+resize();
+
+/* =========================================================
+   MOUSE (PARALLAX)
+   ========================================================= */
+let mouseX = 0;
+let mouseY = 0;
+
+window.addEventListener("mousemove", e => {
+    mouseX = (e.clientX - centerX) / centerX;
+    mouseY = (e.clientY - centerY) / centerY;
+});
+
+/* =========================================================
+   STARS
+   ========================================================= */
+const stars = [];
+
+function createStar() {
+    return {
+        x: (Math.random() - 0.5) * width,
+        y: (Math.random() - 0.5) * height,
+        z: Math.random() * width
+    };
+}
+
+for (let i = 0; i < STAR_COUNT; i++) {
+    stars.push(createStar());
+    console.log(stars[i]);
+}
+
+/* =========================================================
+   ANIMATION
+   ========================================================= */
+function animate() {
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, width, height);
+
+    for (let star of stars) {
+        star.z -= SPEED;
+
+        if (star.z <= 1) {
+            Object.assign(star, createStar());
+            star.z = width;
+        }
+        const k = width / star.z;
+        const x = star.x * k + centerX + mouseX * PARALLAX_STRENGTH;
+        const y = star.y * k + centerY + mouseY * PARALLAX_STRENGTH;
+
+        if (x < 0 || x > width || y < 0 || y > height) continue;
+
+        const rawSize = (1 - star.z / width) * 2;
+        const size = Math.max(0.1, rawSize);
+        const brightness = 1 - star.z / width;
+        
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(255,255,255,${brightness})`;
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+
+</body>
+</html>

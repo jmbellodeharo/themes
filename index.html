@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Themes Desktop</title>
+<style>
+    /* --- GLOBAL STYLES --- */
+    html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: #2c001e; /* estilo ubuntu púrpura */
+        font-family: sans-serif;
+        user-select: none;
+        overflow: hidden;
+    }
+
+    #desktop {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(#3f0030, #2c001e);
+    }
+
+    /* --- ICONS --- */
+    .icon {
+        position: absolute;
+        width: 80px;
+        color: white;
+        cursor: pointer;
+    }
+    .icon img {
+        width: 48px;
+        transition: transform 0.15s ease-in-out;
+    }
+    .icon:hover img {
+        transform: scale(1.15);
+    }
+    .icon span {
+        display: block;
+        margin-top: 5px;
+        font-size: 13px;
+    }
+
+    /* --- FOLDER ICONS (2 IMAGES FOR HOVER)--- */
+    .folder-icon {
+        width: 48px;
+        height: 48px;
+        background-size: cover;
+    }
+    .folder-closed {
+        background-image: url('https://cdn-icons-png.flaticon.com/512/715/715676.png');
+    }
+    .folder-open {
+        background-image: url('https://cdn-icons-png.flaticon.com/512/716/716784.png');
+    }
+
+    .icon:hover .folder-icon.folder-closed {
+        display: none;
+    }
+    .icon:hover .folder-icon.folder-open {
+        display: block;
+    }
+    .folder-open {
+        display: none; /* por defecto oculta */
+    }
+
+    /* --- TERMINAL WINDOW --- */
+    #terminal-window {
+        position: absolute;
+        top: 150px;
+        left: 200px;
+        width: 500px;
+        height: 300px;
+        background: #111;
+        border: 2px solid #444;
+        border-radius: 6px;
+        display: none;
+        box-shadow: 0 0 15px rgba(0,0,0,0.4);
+        z-index: 9999;
+    }
+
+    #terminal-titlebar {
+        background: #333;
+        color: white;
+        padding: 8px;
+        cursor: grab;
+        border-radius: 4px 4px 0 0;
+    }
+
+    #terminal-close {
+        background: transparent;
+        color: red;
+        padding: 8px;
+        cursor: pointer;
+        border-radius: 4px 4px 0 0;
+        font-weight: bold;
+        display: inline;
+        position: absolute;
+        right: 0;
+        top: 0;
+    }
+
+    #terminal-content {
+        padding: 10px;
+        color: #0f0;
+        height: calc(100% - 80px);
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 14px;
+        white-space: pre-wrap;
+    }
+
+    #terminal-input {
+        width: 100%;
+        outline: none;
+        border: none;
+        background: transparent;
+        color: #0f0;
+        font-family: monospace;
+        font-size: 14px;
+    }
+
+    #prompt {
+        color: #0f0;
+        margin-right: 5px;
+    }
+
+    #all-input {
+        display: flex;
+        align-items: center; /* Aligns items vertically */
+    }
+</style>
+</head>
+
+<body>
+<div id="desktop">
+
+        <!-- Icono Terminal -->
+    <div class="icon" id="terminal-icon" style="top: 260px; left: 40px;">
+        <svg width="48px" height="48px" viewBox="0 0 256 210" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid">
+            <g>
+                <rect fill="#000000" x="0" y="0" width="256" height="209.342334" rx="5"></rect>
+                <path d="M28.2414658,21.7735776 C27.3856638,20.9177756 26.3529412,20.4898746 25.143298,20.4898746 C23.9336548,20.4898746 22.8968177,20.9218901 22.0327869,21.7859209 C21.1810993,22.6376085 20.7490839,23.6744455 20.7490839,24.8840887 C20.7490839,26.0937319 21.1810993,27.1305689 22.0327869,27.9822565 L35.4746384,41.424108 L22.0451302,54.8536162 C21.1810993,55.7176471 20.7490839,56.7544841 20.7367406,57.9641273 C20.7490839,59.1737705 21.1810993,60.2106075 22.0327869,61.0622951 C22.8968177,61.9139826 23.9336548,62.3459981 25.1309547,62.3583414 C26.3529412,62.3583414 27.3897782,61.9263259 28.2538091,61.0622951 L43.1891996,46.1145612 C46.3243973,42.9917068 46.3243973,39.8565092 43.1891996,36.7213115 L28.2414658,21.7735776 L28.2414658,21.7735776 Z M86.7857281,54.8783028 C85.9216972,54.0142719 84.8725169,53.5822565 83.6505304,53.5822565 L83.6505304,53.5760849 L54.8165863,53.5760849 L54.8165863,53.5822565 C53.5945998,53.5822565 52.5577628,54.0142719 51.6937319,54.8783028 C50.8297011,55.7423337 50.3976856,56.7791707 50.3976856,58.0011572 C50.3976856,59.2231437 50.8297011,60.272324 51.6937319,61.1363549 C52.5577628,62.0003857 53.5945998,62.4324012 54.8165863,62.4324012 L54.8165863,62.4262295 L83.6505304,62.4262295 L83.6505304,62.4324012 C84.8725169,62.4324012 85.9216972,62.0003857 86.7857281,61.1363549 C87.6497589,60.272324 88.0817743,59.2231437 88.0817743,58.0011572 C88.0817743,56.7791707 87.6497589,55.7423337 86.7857281,54.8783028 L86.7857281,54.8783028 L86.7857281,54.8783028 Z" fill="#FFFFFF"></path>
+            </g>
+        </svg>
+        <span>Terminal</span>
+    </div>
+
+</div>
+
+<!-- TERMINA WINDOW -->
+<div id="terminal-window">
+    <div id="terminal-titlebar">
+        Terminal
+        <div id="terminal-close">
+            x
+        </div>
+    </div>
+    <div id="terminal-content"></div>
+    <div id="all-input"><span id="prompt">themes:~$</span><input id="terminal-input" type="text" autofocus /></div>
+</div>
+
+<script type="application/json" id="datos">
+{
+    "themes":
+        [
+            {
+                "folderName":"Space",
+                "file":"space.html"
+            },
+            {
+                "folderName":"Aquarium",
+                "file":"aquarium.html"
+            },
+            {
+                "folderName":"Half-Life",
+                "file":"halflife.html"
+            }
+        ]
+}
+</script>
+
+<script>
+
+const termIcon = document.getElementById('terminal-icon');
+const termWin = document.getElementById('terminal-window');
+const termInput = document.getElementById('terminal-input');
+const termContent = document.getElementById('terminal-content');
+const folder = document.getElementsByClassName('icon');
+const titlebar = document.getElementById('terminal-titlebar');
+const buttonClose = document.getElementById('terminal-close');
+
+let themes;
+
+let draggedIcon = null;
+let draggingIcon = false;
+let resizing = false;
+let offsetX = 0;
+let offsetY = 0;
+let dragging = false;
+const minWTerm = 100;
+const minHTerm = 100;
+
+/* ------------------------------------------------------
+   TERMINAL: SHOW AFTER DOUBLE CLICK ON AN ICON
+------------------------------------------------------ */
+
+termIcon.addEventListener('dblclick', () => {
+    termWin.style.display = 'block';
+});
+
+/* ------------------------------------------------------
+   TERMINAL: SIMPLE COMMANDS
+------------------------------------------------------ */
+function runCommand(cmd) {
+    const out = document.createElement('div');
+    out.textContent = "$ " + cmd;
+    termContent.appendChild(out);
+
+    let response = "";
+    let arrayCMD = cmd.split(" ");
+    let baseCMD = arrayCMD[0];
+    if (baseCMD === "help") response = "Available commands: help, info, clear, ip, whoami";
+    else if (baseCMD === "info") response = "Web page with my personal themes";
+    else if (baseCMD === "whoami") response = "jmbello";
+    else if (baseCMD === "pwd") response = "/home/jmbello/Desktop";
+    else if (baseCMD === "ls") {
+        themes.forEach(theme => {
+            response = response + " " + theme.folderName;
+        });
+        response = response + " " + "Terminal";
+    }
+    else if (baseCMD === "ip"){
+        if(1 in arrayCMD){
+            if(arrayCMD[1] === "addr")
+            response = 
+            "1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000\n"
+            +"link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00\n"
+            +"inet 127.0.0.1/8 scope host lo\n"
+            +"\tvalid_lft forever preferred_lft forever\n"
+            +"inet 10.255.255.254/32 brd 10.255.255.254 scope global lo\n"
+            +"\tvalid_lft forever preferred_lft forever\n"
+            +"inet6 ::1/128 scope host\n"
+            +"\tvalid_lft forever preferred_lft forever\n";
+        }
+        else{
+            response = "Wrong option for command 'ip'. Available: addr"
+        }
+    } 
+    else if (baseCMD === "clear") {
+        termContent.innerHTML = "";
+        return;
+    }
+    else if (baseCMD.trim() === "") response = "";
+    else response = "Unkown command";
+
+    const respNode = document.createElement('div');
+    respNode.textContent = response;
+    termContent.appendChild(respNode);
+
+    termContent.scrollTop = termContent.scrollHeight;
+}
+
+termInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        runCommand(termInput.value);
+        termInput.value = "";
+    }
+});
+
+
+/* ------------------------------------------------------
+   TERMINAL: TERMINAL CONTENT
+------------------------------------------------------ */
+
+termContent.addEventListener('click', () => {
+    document.getElementById('terminal-input').focus();
+});
+
+/* ------------------------------------------------------
+   MAKE MOVABLE ICONS
+------------------------------------------------------ */
+
+document.addEventListener('mousedown', e => {
+    const iconDiv = event.target.closest(".icon");
+    if(iconDiv){
+        draggingIcon = true;
+        iconDiv.style.cursor = 'grabbing';
+        draggedIcon = iconDiv;
+        offsetX = e.clientX - iconDiv.offsetLeft;
+        offsetY = e.clientY - iconDiv.offsetTop;
+    }
+});
+
+document.addEventListener('mousemove', e => {
+    // What is done when dragging and draggeIcon flags are active
+    if (draggingIcon && draggedIcon) {
+        draggedIcon.style.left = (e.clientX - offsetX) + 'px';
+        draggedIcon.style.top = (e.clientY - offsetY) + 'px';
+    }
+
+    // What is done when resizing flag is active
+    if (resizing) {
+        const newW = e.clientX - termWin.offsetLeft;
+        termWin.style.width = Math.max(newW, minWTerm) + "px";
+
+        const newH = e.clientY - termWin.offsetTop;
+        termWin.style.height = Math.max(newH, minHTerm) + "px";
+  }
+});
+
+document.addEventListener('mouseup', e => {
+    if (draggingIcon && draggedIcon) {
+        draggedIcon.style.cursor = 'grab';
+    }
+    draggingIcon = false;
+    draggedIcon = null;
+    resizing = false;
+});
+
+/* ------------------------------------------------------
+   MAKE TERMINAL DRAGGABLE BY TOP BAR
+------------------------------------------------------ */
+
+titlebar.addEventListener('mousedown', e => {
+    dragging = true;
+    titlebar.style.cursor = 'grabbing';
+    offsetX = e.clientX - termWin.offsetLeft;
+    offsetY = e.clientY - termWin.offsetTop;
+});
+
+titlebar.addEventListener('mousemove', e => {
+    if (dragging) {
+        termWin.style.left = (e.clientX - offsetX) + 'px';
+        termWin.style.top = (e.clientY - offsetY) + 'px';
+    }
+});
+
+titlebar.addEventListener('mouseup', () => {
+    dragging = false;
+    titlebar.style.cursor = 'grab';
+});
+
+/* ------------------------------------------------------
+   CLOSE BUTTON
+------------------------------------------------------ */
+
+buttonClose.addEventListener('click', () => {
+    termWin.style.display = "none";
+});
+
+/* ------------------------------------------------------
+   RESIZE BUTTON
+------------------------------------------------------ */
+
+// Section where when clicked, the resize will be active
+termWin.addEventListener('mousedown', e => {
+    const edge = 10;
+    if (e.offsetX > termWin.offsetWidth - edge && e.offsetY > termWin.offsetHeight - edge) {
+        resizing = true;
+    }
+});
+
+// Section where when mouse moves over it, the cursor image will change
+termWin.addEventListener("mousemove", e => {
+  const edge = 10;
+  if (e.offsetX > termWin.offsetWidth - edge && e.offsetY > termWin.offsetHeight - edge) {
+    termWin.style.cursor = "se-resize";
+  } else {
+    termWin.style.cursor = "default";
+  }
+});
+
+/* ------------------------------------------------------
+   CREATE FOLDER FOR THEMES
+------------------------------------------------------ */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const data = document.getElementById("datos").textContent;
+    themes = JSON.parse(data).themes;
+
+    const tamanoIcono = 110;
+    let contador = 0;
+    themes.forEach(theme => {
+
+        let pos = contador * tamanoIcono;
+        const desktop = document.getElementById("desktop");
+        // Crear el div principal
+        const iconDiv = document.createElement("div");
+        iconDiv.className = "icon";
+        iconDiv.style.top = `${pos}px`;
+        iconDiv.style.left = "40px";
+        iconDiv.dataset.page = theme.file;
+        iconDiv.id = `icon${contador}`;
+
+        // Crear los divs internos
+        const folderClosed = document.createElement("div");
+        folderClosed.className = "folder-icon folder-closed";
+
+        const folderOpen = document.createElement("div");
+        folderOpen.className = "folder-icon folder-open";
+
+        // Crear el span
+        const span = document.createElement("span");
+        span.textContent = theme.folderName;
+
+        // Añadir los hijos al div principal
+        iconDiv.appendChild(folderClosed);
+        iconDiv.appendChild(folderOpen);
+        iconDiv.appendChild(span);
+
+        // Añadir el div al body (o a otro contenedor)
+        desktop.appendChild(iconDiv);
+        contador++;
+    })
+    let posTerm = contador * tamanoIcono;
+    termIcon.style.top = `${posTerm}px`;
+
+    /* ------------------------------------------------------
+    DOUBLE CLICK TO OPEN PAGES
+    ------------------------------------------------------ */
+    document.querySelectorAll('.icon').forEach(icon => {
+        icon.addEventListener('dblclick', () => {
+            const page = icon.dataset.page;
+            if (page) window.open(page, "_self");
+        });
+    });
+
+});
+
+</script>
+
+</body>
+</html>
