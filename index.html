@@ -22,6 +22,26 @@
         background: linear-gradient(#3f0030, #2c001e);
     }
 
+    /* --- CONTEXTUAL MENU --- */
+    #menu {
+        position: absolute;
+        display: none;
+        background: #2c2c2c;
+        color: #fff;
+        border-radius: 6px;
+        padding: 5px 0;
+        min-width: 160px;
+        font-family: sans-serif;
+        z-index: 10000;
+    }
+    #menu div {
+        padding: 8px 16px;
+        cursor: pointer;
+    }
+    #menu div:hover {
+        background: #444;
+    }
+
     /* --- ICONS --- */
     .icon {
         position: absolute;
@@ -65,6 +85,18 @@
         display: none; /* por defecto oculta */
     }
 
+        /* --- FILE ICONS (2 IMAGES FOR HOVER)--- */
+    .file-icon {
+        width: 48px;
+        height: 48px;  
+        background-size: cover;
+        transition: transform 0.2s;
+    }
+
+    .file-icon:hover {
+        transform: scale(1.1);
+    }
+
     /* --- TERMINAL WINDOW --- */
     #terminal-window {
         position: absolute;
@@ -77,7 +109,7 @@
         border-radius: 6px;
         display: none;
         box-shadow: 0 0 15px rgba(0,0,0,0.4);
-        z-index: 9999;
+        z-index: 9998;
     }
 
     #terminal-titlebar {
@@ -130,7 +162,67 @@
         display: flex;
         align-items: center; /* Aligns items vertically */
     }
+
+    /* --- TEXT WINDOW --- */
+    .text-window {
+        position: absolute;
+        top: 150px;
+        left: 200px;
+        width: 500px;
+        height: 300px;
+        background: #111;
+        border: 2px solid #444;
+        border-radius: 6px;
+        display: none;
+        box-shadow: 0 0 15px rgba(0,0,0,0.4);
+        z-index: 9998;
+    }
+
+    #text-titlebar {
+        background: #333;
+        color: white;
+        padding: 8px;
+        cursor: grab;
+        border-radius: 4px 4px 0 0;
+        display: flex; 
+        align-items: center; 
+        font-family: sans-serif;
+    }
+
+    #text-save {
+        display:flex; 
+        align-items:center; 
+        justify-content:center; 
+        margin-left:auto; 
+        cursor:pointer;
+    }
+
+    #text-close {
+        display:flex; 
+        color: red;
+        font-weight: bold;
+        align-items:center; 
+        justify-content:center; 
+        width:20px; 
+        height:20px; 
+        margin-left:4px; 
+        cursor:pointer;
+    }
+
+    #text-input {
+        outline: none;
+        border: none;
+        background: transparent;
+        color: #0f0;
+        font-family: monospace;
+        font-size: 14px;
+        width: 100%; 
+        height: calc(100% - 42px); 
+        box-sizing: border-box; 
+        resize: none;
+    }
 </style>
+<script  src="js/svg.js"></script>
 </head>
 
 <body>
@@ -148,18 +240,21 @@
     </div>
 
 </div>
+<!-- CONTEXTUAL MENU -->
+<div id="menu">
+  <div id="create-file">Create file</div>
+  <div id="opem-file">Open file</div>
+  <div id="delete-file">Delete file</div>
+</div>
 
-<!-- TERMINA WINDOW -->
+<!-- TERMINAL WINDOW -->
 <div id="terminal-window">
-    <div id="terminal-titlebar">
-        Terminal
-        <div id="terminal-close">
-            x
-        </div>
-    </div>
+    <div id="terminal-titlebar">Terminal</div>
+    <div id="terminal-close">x</div>
     <div id="terminal-content"></div>
     <div id="all-input"><span id="prompt">themes:~$</span><input id="terminal-input" type="text" autofocus /></div>
 </div>
+
 
 <script type="application/json" id="datos">
 {
@@ -177,7 +272,8 @@
                 "folderName":"Half-Life",
                 "file":"halflife.html"
             }
-        ]
+        ],
+    "files":[]
 }
 </script>
 
@@ -190,24 +286,34 @@ const termContent = document.getElementById('terminal-content');
 const folder = document.getElementsByClassName('icon');
 const titlebar = document.getElementById('terminal-titlebar');
 const buttonClose = document.getElementById('terminal-close');
+const textTitlebar = document.getElementById('text-titlebar');
+const textClose = document.getElementById('text-close');
+const textInput = document.getElementById('text-input');
+const textTitle = document.getElementById('text-title');
+const createFile = document.getElementById('create-file');
 
-let themes;
+let parsedData;
 
+let contadorCarpetas = 0;
+let contadorFicheros = 0;
 let draggedIcon = null;
 let draggingIcon = false;
 let resizing = false;
+let resizingText = false;
 let offsetX = 0;
 let offsetY = 0;
-let dragging = false;
-const minWTerm = 100;
-const minHTerm = 100;
+let draggingTerminalWindow = false;
+let draggingTextWindow = false;
+const minW = 100;
+const minH = 100;
+let topZIndex = 1000;
 
 /* ------------------------------------------------------
    TERMINAL: SHOW AFTER DOUBLE CLICK ON AN ICON
 ------------------------------------------------------ */
-
 termIcon.addEventListener('dblclick', () => {
     termWin.style.display = 'block';
+    termInput.focus();
 });
 
 /* ------------------------------------------------------
@@ -221,13 +327,18 @@ function runCommand(cmd) {
     let response = "";
     let arrayCMD = cmd.split(" ");
     let baseCMD = arrayCMD[0];
-    if (baseCMD === "help") response = "Available commands: help, info, clear, ip, whoami";
+    if (baseCMD === "help") response = "Available commands: help, info, clear, ip, whoami, pwd, ls";
     else if (baseCMD === "info") response = "Web page with my personal themes";
     else if (baseCMD === "whoami") response = "jmbello";
     else if (baseCMD === "pwd") response = "/home/jmbello/Desktop";
     else if (baseCMD === "ls") {
-        themes.forEach(theme => {
+        parsedData.themes.forEach(theme => {
+            console.log(theme);
             response = response + " " + theme.folderName;
+        });
+        parsedData.files.forEach(file => {
+            console.log(file);
+            response = response + " " + file.fileName;
         });
         response = response + " " + "Terminal";
     }
@@ -273,15 +384,13 @@ termInput.addEventListener('keydown', e => {
 /* ------------------------------------------------------
    TERMINAL: TERMINAL CONTENT
 ------------------------------------------------------ */
-
 termContent.addEventListener('click', () => {
-    document.getElementById('terminal-input').focus();
+    termInput.focus();
 });
 
 /* ------------------------------------------------------
    MAKE MOVABLE ICONS
 ------------------------------------------------------ */
-
 document.addEventListener('mousedown', e => {
     const iconDiv = event.target.closest(".icon");
     if(iconDiv){
@@ -303,11 +412,11 @@ document.addEventListener('mousemove', e => {
     // What is done when resizing flag is active
     if (resizing) {
         const newW = e.clientX - termWin.offsetLeft;
-        termWin.style.width = Math.max(newW, minWTerm) + "px";
+        termWin.style.width = Math.max(newW, minW) + "px";
 
         const newH = e.clientY - termWin.offsetTop;
-        termWin.style.height = Math.max(newH, minHTerm) + "px";
-  }
+        termWin.style.height = Math.max(newH, minH) + "px";
+    }
 });
 
 document.addEventListener('mouseup', e => {
@@ -317,28 +426,28 @@ document.addEventListener('mouseup', e => {
     draggingIcon = false;
     draggedIcon = null;
     resizing = false;
+    resizingText = false;
 });
 
 /* ------------------------------------------------------
    MAKE TERMINAL DRAGGABLE BY TOP BAR
 ------------------------------------------------------ */
-
 titlebar.addEventListener('mousedown', e => {
-    dragging = true;
+    draggingTerminalWindow = true;
     titlebar.style.cursor = 'grabbing';
     offsetX = e.clientX - termWin.offsetLeft;
     offsetY = e.clientY - termWin.offsetTop;
 });
 
 titlebar.addEventListener('mousemove', e => {
-    if (dragging) {
+    if (draggingTerminalWindow) {
         termWin.style.left = (e.clientX - offsetX) + 'px';
         termWin.style.top = (e.clientY - offsetY) + 'px';
     }
 });
 
 titlebar.addEventListener('mouseup', () => {
-    dragging = false;
+    draggingTerminalWindow = false;
     titlebar.style.cursor = 'grab';
 });
 
@@ -353,13 +462,14 @@ buttonClose.addEventListener('click', () => {
 /* ------------------------------------------------------
    RESIZE BUTTON
 ------------------------------------------------------ */
-
 // Section where when clicked, the resize will be active
 termWin.addEventListener('mousedown', e => {
     const edge = 10;
     if (e.offsetX > termWin.offsetWidth - edge && e.offsetY > termWin.offsetHeight - edge) {
         resizing = true;
     }
+    topZIndex++;
+    termWin.style.zIndex = topZIndex;
 });
 
 // Section where when mouse moves over it, the cursor image will change
@@ -373,19 +483,99 @@ termWin.addEventListener("mousemove", e => {
 });
 
 /* ------------------------------------------------------
-   CREATE FOLDER FOR THEMES
+    CONTEXTUAL MENU DISPLAY
+------------------------------------------------------ */
+// Prevent right click from mouse and show contextual menu
+document.addEventListener('contextmenu', function (e) {
+    e.preventDefault();
+    menu.style.top = e.pageY + 'px';
+    menu.style.left = e.pageX + 'px';
+    menu.style.display = 'block';
+
+});
+
+document.addEventListener('click', () => {
+    menu.style.display = 'none';
+});
+
+/* ------------------------------------------------------
+    CONTEXTUAL MENU ACTIONS: CREATE, OPEN, DELETE FILE
 ------------------------------------------------------ */
 
+// ********** CREATE FILE ******************//
+createFile.addEventListener('click', e => {
+
+    // ******** Creation of main div *************
+    const desktop = document.getElementById("desktop");
+    const iconDiv = document.createElement("div");
+    iconDiv.className = "icon";
+    // Set main div position
+    iconDiv.style.top = e.pageY + "px";
+    iconDiv.style.left = e.pageX + "px";
+    // Set filename
+    iconDiv.dataset.fileName = `txt${contadorFicheros}`;
+    iconDiv.id = `icon${contadorFicheros}`;
+    // For centering icon and filename
+    iconDiv.style.display = "flex";
+    iconDiv.style.flexDirection = "column"; // stack vertically
+    iconDiv.style.alignItems = "center";    // center horizontally
+    iconDiv.style.justifyContent = "center";
+    //*****************************************
+
+    // Double click event for text files
+    iconDiv.addEventListener('dblclick', e => {
+        const clickedIcon = e.currentTarget;
+
+        if (!clickedIcon.refToIconObject) {
+            clickedIcon.refToIconObject = createTextWindow(clickedIcon.dataset.fileName);
+            document.body.appendChild(clickedIcon.refToIconObject);
+        }
+        topZIndex++;
+        clickedIcon.refToIconObject.style.zIndex = topZIndex;
+        clickedIcon.refToIconObject.style.display = "block";
+    });
+    //**************************************
+    // Add new file to JSON
+    parsedData.files.push({ fileName: iconDiv.dataset.fileName, content: "HELLO WORLD"});
+
+    // Creation of internal div (icon image)
+    const file = document.createElement("div");
+    file.className = "file-icon";
+    file.appendChild(createSVGTXT());
+
+    // Creation of span (file name)
+    const span = document.createElement("span");
+    
+    span.textContent = iconDiv.dataset.fileName;
+
+    // Add to father div
+    iconDiv.appendChild(file);
+    iconDiv.appendChild(span);
+
+    // Add father div to body
+    desktop.appendChild(iconDiv);
+
+    contadorFicheros++;
+});
+
+// **********  OPEN FILE ******************//
+
+
+// ********** DELETE FILE ******************//
+
+
+
+/* ------------------------------------------------------
+   CREATE FOLDER FOR THEMES
+------------------------------------------------------ */
 document.addEventListener("DOMContentLoaded", () => {
 
-    const data = document.getElementById("datos").textContent;
-    themes = JSON.parse(data).themes;
+    parsedData = JSON.parse(document.getElementById("datos").textContent);
 
     const tamanoIcono = 110;
-    let contador = 0;
-    themes.forEach(theme => {
+    parsedData.themes.forEach(theme => {
 
-        let pos = contador * tamanoIcono;
+        let pos = contadorCarpetas * tamanoIcono;
         const desktop = document.getElementById("desktop");
         // Crear el div principal
         const iconDiv = document.createElement("div");
@@ -393,7 +583,7 @@ document.addEventListener("DOMContentLoaded", () => {
         iconDiv.style.top = `${pos}px`;
         iconDiv.style.left = "40px";
         iconDiv.dataset.page = theme.file;
-        iconDiv.id = `icon${contador}`;
+        iconDiv.id = `icon${contadorCarpetas}`;
 
         // Crear los divs internos
         const folderClosed = document.createElement("div");
@@ -413,9 +603,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Añadir el div al body (o a otro contenedor)
         desktop.appendChild(iconDiv);
-        contador++;
+        contadorCarpetas++;
     })
-    let posTerm = contador * tamanoIcono;
+    let posTerm = contadorCarpetas * tamanoIcono;
     termIcon.style.top = `${posTerm}px`;
 
     /* ------------------------------------------------------
@@ -429,6 +619,121 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 });
+
+
+/* ------------------------------------------------------
+    FUNCTION CREATE TEXT WINDOW 
+-------------------------------------------------------*/
+function createTextWindow(textTitle) {
+    const minW = 200; // ancho mínimo
+    const minH = 100; // alto mínimo
+
+    let draggingTextWindow = false;
+    let offsetX = 0;
+    let offsetY = 0;
+    let resizingText = false;
+
+    // ------------------ Crear ventana -------------------
+    const textWindow = document.createElement("div");
+    textWindow.id = "text-window" + contadorFicheros;
+    textWindow.className = "text-window";
+    textWindow.style.display = "block";
+    textWindow.style.position = "absolute";
+    textWindow.style.left = "100px";
+    textWindow.style.top = "100px";
+    textWindow.style.width = "400px";
+    textWindow.style.height = "250px";
+    textWindow.style.zIndex = topZIndex++;
+
+    // ------------------ Title bar -------------------
+    const titlebar = document.createElement("div");
+    titlebar.id = "text-titlebar";
+
+    const title = document.createElement("div");
+    title.id = "text-title";
+    title.textContent = textTitle;
+
+    const save = document.createElement("div");
+    save.id = "text-save";
+    save.appendChild(createSVGSave(12,12));
+
+    const close = document.createElement("div");
+    close.id = "text-close";
+    close.textContent = "x";
+
+    const textarea = document.createElement("textarea");
+    textarea.id = "text-input";
+    textarea.setAttribute("autofocus", "");
+    textarea.style.width = "100%";
+    textarea.style.height = "calc(100% - 40px)";
+
+    // Ensamblado
+    titlebar.appendChild(title);
+    titlebar.appendChild(save);
+    titlebar.appendChild(close);
+    textWindow.appendChild(titlebar);
+    textWindow.appendChild(textarea);
+
+    // ------------------ Drag window using titlebar -------------------
+    titlebar.addEventListener('mousedown', e => {
+        draggingTextWindow = true;
+        offsetX = e.clientX - textWindow.offsetLeft;
+        offsetY = e.clientY - textWindow.offsetTop;
+        textWindow.style.cursor = 'grabbing';
+    });
+
+    // listen to document even when mouse is outside titlebar
+    document.addEventListener('mousemove', e => {
+        // mover ventana
+        if (draggingTextWindow) {
+            textWindow.style.left = (e.clientX - offsetX) + "px";
+            textWindow.style.top = (e.clientY - offsetY) + "px";
+        }
+        // window resizing
+        if (resizingText) {
+            let newW = e.clientX - textWindow.offsetLeft;
+            let newH = e.clientY - textWindow.offsetTop;
+            textWindow.style.width = Math.max(newW, minW) + "px";
+            textWindow.style.height = Math.max(newH, minH) + "px";
+        }
+
+        // change cursor when resize 
+        const rect = textWindow.getBoundingClientRect();
+        const edge = 10;
+        if (!draggingTextWindow && !resizingText) {
+            if (e.clientX > rect.right - edge && e.clientY > rect.bottom - edge) {
+                textWindow.style.cursor = "se-resize";
+            } else {
+                textWindow.style.cursor = "default";
+            }
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        draggingTextWindow = false;
+        resizingText = false;
+        textWindow.style.cursor = "default";
+    });
+
+    // ------------------ Window resize -------------------
+    textWindow.addEventListener('mousedown', e => {
+        const rect = textWindow.getBoundingClientRect();
+        const edge = 10;
+        topZIndex++;
+        textWindow.style.zIndex = topZIndex;
+        if (e.clientX > rect.right - edge && e.clientY > rect.bottom - edge) {
+            resizingText = true;
+            e.preventDefault();
+        }
+    });
+
+    // ------------------ Close button -------------------
+    close.addEventListener('click', () => {
+        textWindow.style.display = "none";
+    });
+
+    return textWindow;
+}
 
 </script>
 
