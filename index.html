@@ -243,7 +243,7 @@
 <!-- CONTEXTUAL MENU -->
 <div id="menu">
   <div id="create-file">Create file</div>
-  <div id="opem-file">Open file</div>
+  <div id="open-file">Open file</div>
   <div id="delete-file">Delete file</div>
 </div>
 
@@ -291,11 +291,13 @@ const textClose = document.getElementById('text-close');
 const textInput = document.getElementById('text-input');
 const textTitle = document.getElementById('text-title');
 const createFile = document.getElementById('create-file');
+const openFile = document.getElementById('open-file');
+const deleteFile = document.getElementById('delete-file');
 
 let parsedData;
-
-let contadorCarpetas = 0;
-let contadorFicheros = 0;
+let contextTarget;
+let folderCounter = 0;
+let filesCounter = 0;
 let draggedIcon = null;
 let draggingIcon = false;
 let resizing = false;
@@ -486,8 +488,9 @@ termWin.addEventListener("mousemove", e => {
     CONTEXTUAL MENU DISPLAY
 ------------------------------------------------------ */
 // Prevent right click from mouse and show contextual menu
-document.addEventListener('contextmenu', function (e) {
+document.addEventListener('contextmenu', e => {
     e.preventDefault();
+    contextTarget = e.target.closest(".icon");
     menu.style.top = e.pageY + 'px';
     menu.style.left = e.pageX + 'px';
     menu.style.display = 'block';
@@ -513,8 +516,8 @@ createFile.addEventListener('click', e => {
     iconDiv.style.top = e.pageY + "px";
     iconDiv.style.left = e.pageX + "px";
     // Set filename
-    iconDiv.dataset.fileName = `txt${contadorFicheros}`;
-    iconDiv.id = `icon${contadorFicheros}`;
+    iconDiv.dataset.fileName = `txt${filesCounter}`;
+    iconDiv.id = `icon${filesCounter}`;
     // For centering icon and filename
     iconDiv.style.display = "flex";
     iconDiv.style.flexDirection = "column"; // stack vertically
@@ -555,14 +558,30 @@ createFile.addEventListener('click', e => {
     // Add father div to body
     desktop.appendChild(iconDiv);
 
-    contadorFicheros++;
+    filesCounter++;
 });
 
 // **********  OPEN FILE ******************//
-
+openFile.addEventListener('click', e => {
+        if (!contextTarget.refToIconObject) {
+            contextTarget.refToIconObject = createTextWindow(contextTarget.dataset.fileName);
+            document.body.appendChild(contextTarget.refToIconObject);
+        }
+        topZIndex++;
+        contextTarget.refToIconObject.style.zIndex = topZIndex;
+        contextTarget.refToIconObject.style.display = "block";
+});
 
 // ********** DELETE FILE ******************//
-
+deleteFile.addEventListener('click', e => {
+    parsedData.files = parsedData.files.filter(
+        file => file.fileName !== contextTarget.dataset.fileName
+    );
+    if (contextTarget.refToIconObject) {
+        contextTarget.refToIconObject.remove();
+    }
+    contextTarget.remove();
+});
 
 
 /* ------------------------------------------------------
@@ -575,7 +594,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const tamanoIcono = 110;
     parsedData.themes.forEach(theme => {
 
-        let pos = contadorCarpetas * tamanoIcono;
+        let pos = folderCounter * tamanoIcono;
         const desktop = document.getElementById("desktop");
         // Crear el div principal
         const iconDiv = document.createElement("div");
@@ -583,7 +602,7 @@ document.addEventListener("DOMContentLoaded", () => {
         iconDiv.style.top = `${pos}px`;
         iconDiv.style.left = "40px";
         iconDiv.dataset.page = theme.file;
-        iconDiv.id = `icon${contadorCarpetas}`;
+        iconDiv.id = `icon${folderCounter}`;
 
         // Crear los divs internos
         const folderClosed = document.createElement("div");
@@ -603,9 +622,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Añadir el div al body (o a otro contenedor)
         desktop.appendChild(iconDiv);
-        contadorCarpetas++;
+        folderCounter++;
     })
-    let posTerm = contadorCarpetas * tamanoIcono;
+    let posTerm = folderCounter * tamanoIcono;
     termIcon.style.top = `${posTerm}px`;
 
     /* ------------------------------------------------------
@@ -635,7 +654,7 @@ function createTextWindow(textTitle) {
 
     // ------------------ Crear ventana -------------------
     const textWindow = document.createElement("div");
-    textWindow.id = "text-window" + contadorFicheros;
+    textWindow.id = "text-window" + filesCounter;
     textWindow.className = "text-window";
     textWindow.style.display = "block";
     textWindow.style.position = "absolute";
@@ -725,6 +744,25 @@ function createTextWindow(textTitle) {
             resizingText = true;
             e.preventDefault();
         }
+    });
+
+    // ------------------ Save button -------------------
+    save.addEventListener('click', () => {
+        const txtContent = textarea.value;
+
+        const blob = new Blob([txtContent], {type: "text/plain;charset=utf-8"});
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = title.textContent + ".txt";
+
+        document.body.appendChild(a);
+        a.click();
+
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
     });
 
     // ------------------ Close button -------------------
